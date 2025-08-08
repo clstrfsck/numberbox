@@ -45,23 +45,10 @@
 
 #include "audio_player.h"
 #include "number_to_speech.h"
-
-#ifndef PICO_POWER_SAMPLE_COUNT
-#define PICO_POWER_SAMPLE_COUNT 3
-#endif
+#include "constants.h"
 
 namespace {
-    constexpr uint32_t SILENCE_SAMPLES = 6615;
-
-    constexpr uint USER_LED_PIN = 25;
-
-    constexpr uint WAVESHARE_MP28164_MODE_PIN = 23;
-    constexpr uint PICO_FIRST_ADC_PIN = 26;
-    constexpr uint PICO_VSYS_PIN = 29;
-
-    typedef audio_player::sample_data sample_data;
-
-    const sample_data number_samples[] = {
+    const audio_player::sample_data number_samples[] = {
         [join_and] = { AND_AUDIO_DATA, AND_SAMPLE_SIZE, AND_SAMPLES_PER_BLOCK },
         [billion] = { BILLION_AUDIO_DATA, BILLION_SAMPLE_SIZE, BILLION_SAMPLES_PER_BLOCK },
         [eight] = { EIGHT_AUDIO_DATA, EIGHT_SAMPLE_SIZE, EIGHT_SAMPLES_PER_BLOCK },
@@ -107,10 +94,19 @@ namespace {
         }
     }
 
+    /**
+     * Writes a number followed by a newline to stdout
+     * @param number The number to write
+     */
     void write_number(uint32_t number) {
         details::write_digits(number);
         putchar('\n');
     }
+
+
+    // // Power monitoring
+    // constexpr uint PICO_POWER_SAMPLE_COUNT = 3;
+    // constexpr float VOLTAGE_CONVERSION_FACTOR = 3.0f / (1 << 12);
 
     // float power_voltage() {
     //     // setup adc
@@ -138,66 +134,33 @@ namespace {
 
     //     vsys /= PICO_POWER_SAMPLE_COUNT;
     //     // Generate voltage
-    //     const float conversion_factor = 3.0f / (1 << 12);
-    //     return vsys * 3 * conversion_factor;
+    //     return vsys * 3 * VOLTAGE_CONVERSION_FACTOR;
     // }
 }
 
 int main() {
     set_sys_clock_48mhz();
     stdio_init_all();
-    adc_init();
+    // adc_init();
 
     // Initialize and turn off the user LED on Seeed Xiao RP2350 and Waveshare RP2350 Plus
-    gpio_init(USER_LED_PIN);
-    gpio_set_dir(USER_LED_PIN, GPIO_OUT);
+    gpio_init(constants::USER_LED_PIN);
+    gpio_set_dir(constants::USER_LED_PIN, GPIO_OUT);
     // For Seeed Xiao 2350, 1 = off, 0 = on
     // For RPi Pico 2 and Waveshare RP2350 Plus, 0 = off, 1 = on
-    gpio_put(USER_LED_PIN, 0);
+    gpio_put(constants::USER_LED_PIN, 0);
 
     // For Waveshare RP2350 Plus, we use GPIO 23 to set fixed PWM on for MP28164.
     // This prevents PSM mode and reduces voice frequency output ripple.
-    gpio_init(WAVESHARE_MP28164_MODE_PIN);
-    gpio_set_dir(WAVESHARE_MP28164_MODE_PIN, GPIO_OUT);
-    gpio_put(WAVESHARE_MP28164_MODE_PIN, 1);
+    gpio_init(constants::WAVESHARE_MP28164_MODE_PIN);
+    gpio_set_dir(constants::WAVESHARE_MP28164_MODE_PIN, GPIO_OUT);
+    gpio_put(constants::WAVESHARE_MP28164_MODE_PIN, 1);
 
     audio_player player;
 
-    puts("Audio device initialized, playing sound...");
-
     uint32_t counter = 1234567;
-    std::list<sample_data> samples_to_play;
+    std::list<audio_player::sample_data> samples_to_play;
     while (true) {
-        // if (counter % 10 == 0) {
-        //     // Every 100 numbers, print the power voltage
-        //     static const std::map<char, number_token> volts_map = {
-        //         {'0', zero},
-        //         {'1', one},
-        //         {'2', two},
-        //         {'3', three},
-        //         {'4', four},
-        //         {'5', five},
-        //         {'6', six},
-        //         {'7', seven},
-        //         {'8', eight},
-        //         {'9', nine}
-        //     };
-        //     char volts[16];
-        //     float voltage = power_voltage();
-        //     snprintf(volts, sizeof(volts), "%.2f", voltage);
-        //     samples_to_play.clear();
-        //     for (const char * p = volts; *p; ++p) {
-        //         if (volts_map.count(*p)) {
-        //             samples_to_play.push_back(number_samples[volts_map.at(*p)]);
-        //         } else {
-        //             samples_to_play.push_back(number_samples[join_and]);
-        //         }
-        //     }
-        //     printf("Power voltage: %.2fV (%s)\n", voltage, volts);
-        //     player.play_silence(SILENCE_SAMPLES * 2);
-        //     player.play_samples(samples_to_play);
-        //     player.play_silence(SILENCE_SAMPLES * 2);
-        // }
         write_number(counter);
         const auto tokens = number_to_speech(counter);
         counter += 1;
@@ -213,7 +176,7 @@ int main() {
             }
             player.play_samples(samples_to_play);
         }
-        player.play_silence(SILENCE_SAMPLES);
+        player.play_silence(constants::SILENCE_SAMPLES);
     }
 
     return 0;
