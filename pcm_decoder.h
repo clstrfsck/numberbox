@@ -13,7 +13,9 @@ public:
      * @param data_length Total length of data in bytes
      * @param block_size Size of each sample block in bytes. Ignored for PCM data.
      */
-    pcm_decoder(const uint8_t *pcm_data, size_t data_length, size_t block_size);
+    pcm_decoder(const uint8_t *pcm_data, size_t data_length, size_t block_size) : data(pcm_data), bytes_remaining(data_length) {
+        // Nothing to do here
+    }
 
     /**
      * Decode and return a single sample
@@ -22,7 +24,18 @@ public:
      * 
      * @return Next 16-bit PCM sample, or 0 if no more data available
      */
-    int16_t next();
+    int16_t next() {
+        if (empty()) {
+            return 0;
+        }
+
+        // Read sample (16-bit little-endian)
+        int16_t sample = static_cast<int16_t>(data[0] | data[1] << 8);
+        data += 2;
+        bytes_remaining -= 2;
+
+        return sample;
+    }
 
     /**
      * Check if there is more data to decode

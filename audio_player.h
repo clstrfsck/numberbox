@@ -6,7 +6,6 @@
 #define AUDIO_PLAYER_H
 
 #include "pico/audio.h"
-#include "adpcm_decoder.h"
 
 #include <list>
 #include <cstdint>
@@ -38,7 +37,8 @@ private:
     audio_buffer_pool_t *producer_pool = nullptr;
 
 private:
-    void play_samples(adpcm_decoder &sample, bool join_next, std::list<sample_data> &other_samples);
+    template <typename Decoder>
+    void play_samples(Decoder &sample, bool join_next, std::list<sample_data> &other_samples);
 };
 
 #endif // AUDIO_PLAYER_H

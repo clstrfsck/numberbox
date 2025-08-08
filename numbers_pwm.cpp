@@ -112,35 +112,35 @@ namespace {
         putchar('\n');
     }
 
-    float power_voltage() {
-        // setup adc
-        adc_gpio_init(PICO_VSYS_PIN);
-        adc_select_input(PICO_VSYS_PIN - PICO_FIRST_ADC_PIN);
+    // float power_voltage() {
+    //     // setup adc
+    //     adc_gpio_init(PICO_VSYS_PIN);
+    //     adc_select_input(PICO_VSYS_PIN - PICO_FIRST_ADC_PIN);
     
-        adc_fifo_setup(true, false, 0, false, false);
-        adc_run(true);
+    //     adc_fifo_setup(true, false, 0, false, false);
+    //     adc_run(true);
 
-        // We seem to read low values initially - this seems to fix it
-        int ignore_count = PICO_POWER_SAMPLE_COUNT;
-        while (!adc_fifo_is_empty() || ignore_count-- > 0) {
-            (void)adc_fifo_get_blocking();
-        }
+    //     // We seem to read low values initially - this seems to fix it
+    //     int ignore_count = PICO_POWER_SAMPLE_COUNT;
+    //     while (!adc_fifo_is_empty() || ignore_count-- > 0) {
+    //         (void)adc_fifo_get_blocking();
+    //     }
 
-        // read vsys
-        uint32_t vsys = 0;
-        for(int i = 0; i < PICO_POWER_SAMPLE_COUNT; i++) {
-            uint16_t val = adc_fifo_get_blocking();
-            vsys += val;
-        }
+    //     // read vsys
+    //     uint32_t vsys = 0;
+    //     for(int i = 0; i < PICO_POWER_SAMPLE_COUNT; i++) {
+    //         uint16_t val = adc_fifo_get_blocking();
+    //         vsys += val;
+    //     }
 
-        adc_run(false);
-        adc_fifo_drain();
+    //     adc_run(false);
+    //     adc_fifo_drain();
 
-        vsys /= PICO_POWER_SAMPLE_COUNT;
-        // Generate voltage
-        const float conversion_factor = 3.0f / (1 << 12);
-        return vsys * 3 * conversion_factor;
-    }
+    //     vsys /= PICO_POWER_SAMPLE_COUNT;
+    //     // Generate voltage
+    //     const float conversion_factor = 3.0f / (1 << 12);
+    //     return vsys * 3 * conversion_factor;
+    // }
 }
 
 int main() {
@@ -152,7 +152,7 @@ int main() {
     gpio_init(USER_LED_PIN);
     gpio_set_dir(USER_LED_PIN, GPIO_OUT);
     // For Seeed Xiao 2350, 1 = off, 0 = on
-    // For Waveshare RP2350 Plus, 0 = off, 1 = on
+    // For RPi Pico 2 and Waveshare RP2350 Plus, 0 = off, 1 = on
     gpio_put(USER_LED_PIN, 0);
 
     // For Waveshare RP2350 Plus, we use GPIO 23 to set fixed PWM on for MP28164.
@@ -168,36 +168,36 @@ int main() {
     uint32_t counter = 1234567;
     std::list<sample_data> samples_to_play;
     while (true) {
-        if (counter % 10 == 0) {
-            // Every 100 numbers, print the power voltage
-            static const std::map<char, number_token> volts_map = {
-                {'0', zero},
-                {'1', one},
-                {'2', two},
-                {'3', three},
-                {'4', four},
-                {'5', five},
-                {'6', six},
-                {'7', seven},
-                {'8', eight},
-                {'9', nine}
-            };
-            char volts[16];
-            float voltage = power_voltage();
-            snprintf(volts, sizeof(volts), "%.2f", voltage);
-            samples_to_play.clear();
-            for (const char * p = volts; *p; ++p) {
-                if (volts_map.count(*p)) {
-                    samples_to_play.push_back(number_samples[volts_map.at(*p)]);
-                } else {
-                    samples_to_play.push_back(number_samples[join_and]);
-                }
-            }
-            printf("Power voltage: %.2fV (%s)\n", voltage, volts);
-            player.play_silence(SILENCE_SAMPLES * 2);
-            player.play_samples(samples_to_play);
-            player.play_silence(SILENCE_SAMPLES * 2);
-        }
+        // if (counter % 10 == 0) {
+        //     // Every 100 numbers, print the power voltage
+        //     static const std::map<char, number_token> volts_map = {
+        //         {'0', zero},
+        //         {'1', one},
+        //         {'2', two},
+        //         {'3', three},
+        //         {'4', four},
+        //         {'5', five},
+        //         {'6', six},
+        //         {'7', seven},
+        //         {'8', eight},
+        //         {'9', nine}
+        //     };
+        //     char volts[16];
+        //     float voltage = power_voltage();
+        //     snprintf(volts, sizeof(volts), "%.2f", voltage);
+        //     samples_to_play.clear();
+        //     for (const char * p = volts; *p; ++p) {
+        //         if (volts_map.count(*p)) {
+        //             samples_to_play.push_back(number_samples[volts_map.at(*p)]);
+        //         } else {
+        //             samples_to_play.push_back(number_samples[join_and]);
+        //         }
+        //     }
+        //     printf("Power voltage: %.2fV (%s)\n", voltage, volts);
+        //     player.play_silence(SILENCE_SAMPLES * 2);
+        //     player.play_samples(samples_to_play);
+        //     player.play_silence(SILENCE_SAMPLES * 2);
+        // }
         write_number(counter);
         const auto tokens = number_to_speech(counter);
         counter += 1;

@@ -2,6 +2,7 @@
  * Copyright (c) 2025 Martin Sandiford.
  */
 
+#include "pcm_decoder.h"
 #include "audio_player.h"
 
 #include "pico/stdlib.h"
@@ -11,6 +12,7 @@
 #include <limits>
 
 typedef audio_player::sample_data sample_data;
+typedef pcm_decoder decoder;
 
 namespace {
     constexpr uint32_t OVERLAP_SAMPLES = 4410;
@@ -103,7 +105,7 @@ void audio_player::play_samples(std::list<sample_data> &other_samples) {
     while (!other_samples.empty()) {
         const auto first_sample = other_samples.front();
         other_samples.pop_front();
-        adpcm_decoder sample(first_sample.data, first_sample.size, first_sample.block_size);
+        decoder sample(first_sample.data, first_sample.size, first_sample.block_size);
         play_samples(sample, first_sample.join_next, other_samples);
     }
 }
@@ -112,7 +114,8 @@ void audio_player::play_silence(uint32_t samples) {
     process_audio_data(producer_pool, samples, []() { return int16_t(0); });
 }
 
-void audio_player::play_samples(adpcm_decoder &sample, bool join_next, std::list<sample_data> &other_samples) {
+template <typename Decoder>
+void audio_player::play_samples(Decoder &sample, bool join_next, std::list<sample_data> &other_samples) {
     if (join_next) {
         // For most adjacent samples, we overlap them to a degree.
         // In this case, we play the part that does not overlap first...
@@ -126,7 +129,7 @@ void audio_player::play_samples(adpcm_decoder &sample, bool join_next, std::list
         if (!other_samples.empty()) {
             other_samples.pop_front();
         }
-        adpcm_decoder next_sample(next_sample_data.data, next_sample_data.size, next_sample_data.block_size);
+        decoder next_sample(next_sample_data.data, next_sample_data.size, next_sample_data.block_size);
         // ...and play the overlapping parts from current and next sample...
         if (!next_sample.empty()) {
             const auto overlapping_len = std::min(sample.size(), next_sample.size());
