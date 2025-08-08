@@ -40,6 +40,7 @@ pico_sdk_init()
 add_executable(numbers_pwm
     numbers_pwm.cpp
     audio_player.cpp
+    adpcm_decoder.cpp
     number_to_speech.cpp
 )
 

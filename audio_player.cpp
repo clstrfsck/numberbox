@@ -47,19 +47,19 @@ namespace {
     }
 
     template <typename SampleProcessor>
-    void process_audio_data(audio_buffer_pool_t *producer_pool, uint32_t size, SampleProcessor processor) {
-        uint32_t data_offset = 0;
-        while (data_offset < size) {
+    void process_audio_data(audio_buffer_pool_t *producer_pool, uint32_t size, SampleProcessor source) {
+        uint32_t count = 0;
+        while (count < size) {
             audio_buffer_t *buffer = safely_take_audio_buffer(producer_pool);
             int16_t *samples = reinterpret_cast<int16_t *>(buffer->buffer->bytes);
-            uint32_t to_add = std::min(buffer->max_sample_count, size - data_offset);
+            uint32_t to_add = std::min(buffer->max_sample_count, size - count);
             
             for (uint32_t n = 0; n < to_add; ++n) {
-                samples[n] = processor(data_offset + n);
+                samples[n] = source();
             }
             
             buffer->sample_count = to_add;
-            data_offset += to_add;
+            count += to_add;
             give_audio_buffer(producer_pool, buffer);
         }
     }
@@ -103,50 +103,44 @@ void audio_player::play_samples(std::list<sample_data> &other_samples) {
     while (!other_samples.empty()) {
         const auto first_sample = other_samples.front();
         other_samples.pop_front();
-        play_samples(first_sample.data, first_sample.size, first_sample.join_next, other_samples);
+        adpcm_decoder sample(first_sample.data, first_sample.size, first_sample.block_size);
+        play_samples(sample, first_sample.join_next, other_samples);
     }
 }
 
 void audio_player::play_silence(uint32_t samples) {
-    process_audio_data(producer_pool, samples, [](uint32_t) { return int16_t(0); });
+    process_audio_data(producer_pool, samples, []() { return int16_t(0); });
 }
 
-void audio_player::play_samples(const int16_t *data, uint32_t size, bool join_next, std::list<sample_data> &other_samples) {
+void audio_player::play_samples(adpcm_decoder &sample, bool join_next, std::list<sample_data> &other_samples) {
     if (join_next) {
         // For most adjacent samples, we overlap them to a degree.
         // In this case, we play the part that does not overlap first...
-        if (size > OVERLAP_SAMPLES) {
+        if (sample.size() > OVERLAP_SAMPLES) {
             // Play the first part before the overlap
-            const auto to_play = size - OVERLAP_SAMPLES;
-            size -= to_play;
-            process_audio_data(producer_pool, to_play, [data](uint32_t index) { return data[index]; });
-            data += to_play;
+            const auto to_play = sample.size() - OVERLAP_SAMPLES;
+            process_audio_data(producer_pool, to_play, [&sample]() { return sample.next(); });
         }
         // ...and then we get the next sample...
-        sample_data next_sample = other_samples.empty() ? sample_data{ nullptr, 0 } : other_samples.front();
+        sample_data next_sample_data = other_samples.empty() ? sample_data{ nullptr, 0, 0 } : other_samples.front();
         if (!other_samples.empty()) {
             other_samples.pop_front();
         }
-        auto next_data = next_sample.data;
-        auto next_size = next_sample.size;
+        adpcm_decoder next_sample(next_sample_data.data, next_sample_data.size, next_sample_data.block_size);
         // ...and play the overlapping parts from current and next sample...
-        if (next_data && next_size) {
-            const auto overlapping_len = std::min(size, next_size);
-            size -= overlapping_len;
-            next_size -= overlapping_len;
-            process_audio_data(producer_pool, overlapping_len, [data, next_data](uint32_t index) {
-                return mix(data[index], next_data[index]);
+        if (!next_sample.empty()) {
+            const auto overlapping_len = std::min(sample.size(), next_sample.size());
+            process_audio_data(producer_pool, overlapping_len, [&sample, &next_sample]() {
+                return mix(sample.next(), next_sample.next());
             });
-            data += overlapping_len;
-            next_data += overlapping_len;
-            if (next_size) {
+            if (!next_sample.empty()) {
                 // ...and finally, we play the rest of the next sample,
                 // giving it a chance to overlap with following samples.
-                play_samples(next_data, next_size, next_sample.join_next, other_samples);
+                play_samples(next_sample, next_sample_data.join_next, other_samples);
             }
         }
         // In the unusual case where we have no next sample, or the next sample was shorter than
         // the overlap we wanted, we just fall through to play the remainder of the current sample.
     }
-    process_audio_data(producer_pool, size, [data](uint32_t index) { return data[index]; });
+    process_audio_data(producer_pool, sample.size(), [&sample]() { return sample.next(); });
 }

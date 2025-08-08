@@ -6,6 +6,7 @@
 #define AUDIO_PLAYER_H
 
 #include "pico/audio.h"
+#include "adpcm_decoder.h"
 
 #include <list>
 #include <cstdint>
@@ -14,14 +15,15 @@
 class audio_player {
 public:
     struct sample_data {
-        sample_data(const int16_t *data, uint32_t size, bool join_next = false)
-            : data(data), size(size), join_next(join_next) { }
-        const int16_t *data;
-        const uint32_t size;
+        sample_data(const uint8_t *data, size_t size, size_t block_size, bool join_next = false)
+            : data(data), size(size), block_size(block_size), join_next(join_next) { }
+        const uint8_t *data;
+        const size_t size;
+        const size_t block_size;
         const bool join_next;
 
         sample_data join(bool join_next) const {
-            return sample_data(data, size, join_next);
+            return sample_data(data, size, block_size, join_next);
         }
     };
 
@@ -36,7 +38,7 @@ private:
     audio_buffer_pool_t *producer_pool = nullptr;
 
 private:
-    void play_samples(const int16_t *data, uint32_t size, bool join_next, std::list<sample_data> &other_samples);
+    void play_samples(adpcm_decoder &sample, bool join_next, std::list<sample_data> &other_samples);
 };
 
 #endif // AUDIO_PLAYER_H
