@@ -1,109 +1,16 @@
-#include <map>
-#include <list>
-#include <cstdio>
-
-#include "pico/audio.h"
-#include "pico/stdlib.h"
-#include "hardware/adc.h"
-#include "hardware/gpio.h"
-#include "pico/audio_pwm.h"
-#include "hardware/clocks.h"
-
-#include "and.h"
-#include "billion.h"
-#include "eight.h"
-#include "eighteen.h"
-#include "eighty.h"
-#include "eleven.h"
-#include "fifteen.h"
-#include "fifty.h"
-#include "five.h"
-#include "forty.h"
-#include "four.h"
-#include "fourteen.h"
-#include "hundred.h"
-#include "million.h"
-#include "nine.h"
-#include "nineteen.h"
-#include "ninety.h"
-#include "one.h"
-#include "seven.h"
-#include "seventeen.h"
-#include "seventy.h"
-#include "six.h"
-#include "sixteen.h"
-#include "sixty.h"
-#include "ten.h"
-#include "thirteen.h"
-#include "thirty.h"
-#include "thousand.h"
-#include "three.h"
-#include "twelve.h"
-#include "twenty.h"
-#include "two.h"
-#include "zero.h"
-
+#include "fail.h"
+#include "audio.h"
+#include "constants.h"
 #include "audio_player.h"
 #include "number_to_speech.h"
-#include "constants.h"
+
+#include <list>
+
+#include "hardware/clocks.h"
+
+#include "pico/stdlib.h"
 
 namespace {
-    const audio_player::sample_data number_samples[] = {
-        [join_and] = { AND_AUDIO_DATA, AND_SAMPLE_SIZE, AND_SAMPLES_PER_BLOCK },
-        [billion] = { BILLION_AUDIO_DATA, BILLION_SAMPLE_SIZE, BILLION_SAMPLES_PER_BLOCK },
-        [eight] = { EIGHT_AUDIO_DATA, EIGHT_SAMPLE_SIZE, EIGHT_SAMPLES_PER_BLOCK },
-        [eighteen] = { EIGHTEEN_AUDIO_DATA, EIGHTEEN_SAMPLE_SIZE, EIGHTEEN_SAMPLES_PER_BLOCK },
-        [eighty] = { EIGHTY_AUDIO_DATA, EIGHTY_SAMPLE_SIZE, EIGHTY_SAMPLES_PER_BLOCK },
-        [eleven] = { ELEVEN_AUDIO_DATA, ELEVEN_SAMPLE_SIZE, ELEVEN_SAMPLES_PER_BLOCK },
-        [fifteen] = { FIFTEEN_AUDIO_DATA, FIFTEEN_SAMPLE_SIZE, FIFTEEN_SAMPLES_PER_BLOCK },
-        [fifty] = { FIFTY_AUDIO_DATA, FIFTY_SAMPLE_SIZE, FIFTY_SAMPLES_PER_BLOCK },
-        [five] = { FIVE_AUDIO_DATA, FIVE_SAMPLE_SIZE, FIVE_SAMPLES_PER_BLOCK },
-        [forty] = { FORTY_AUDIO_DATA, FORTY_SAMPLE_SIZE, FORTY_SAMPLES_PER_BLOCK },
-        [four] = { FOUR_AUDIO_DATA, FOUR_SAMPLE_SIZE, FOUR_SAMPLES_PER_BLOCK },
-        [fourteen] = { FOURTEEN_AUDIO_DATA, FOURTEEN_SAMPLE_SIZE, FOURTEEN_SAMPLES_PER_BLOCK },
-        [hundred] = { HUNDRED_AUDIO_DATA, HUNDRED_SAMPLE_SIZE, HUNDRED_SAMPLES_PER_BLOCK },
-        [million] = { MILLION_AUDIO_DATA, MILLION_SAMPLE_SIZE, MILLION_SAMPLES_PER_BLOCK },
-        [nine] = { NINE_AUDIO_DATA, NINE_SAMPLE_SIZE, NINE_SAMPLES_PER_BLOCK },
-        [nineteen] = { NINETEEN_AUDIO_DATA, NINETEEN_SAMPLE_SIZE, NINETEEN_SAMPLES_PER_BLOCK },
-        [ninety] = { NINETY_AUDIO_DATA, NINETY_SAMPLE_SIZE, NINETY_SAMPLES_PER_BLOCK },
-        [one] = { ONE_AUDIO_DATA, ONE_SAMPLE_SIZE, ONE_SAMPLES_PER_BLOCK },
-        [seven] = { SEVEN_AUDIO_DATA, SEVEN_SAMPLE_SIZE, SEVEN_SAMPLES_PER_BLOCK },
-        [seventeen] = { SEVENTEEN_AUDIO_DATA, SEVENTEEN_SAMPLE_SIZE, SEVENTEEN_SAMPLES_PER_BLOCK },
-        [seventy] = { SEVENTY_AUDIO_DATA, SEVENTY_SAMPLE_SIZE, SEVENTY_SAMPLES_PER_BLOCK },
-        [six] = { SIX_AUDIO_DATA, SIX_SAMPLE_SIZE, SIX_SAMPLES_PER_BLOCK },
-        [sixteen] = { SIXTEEN_AUDIO_DATA, SIXTEEN_SAMPLE_SIZE, SIXTEEN_SAMPLES_PER_BLOCK },
-        [sixty] = { SIXTY_AUDIO_DATA, SIXTY_SAMPLE_SIZE, SIXTY_SAMPLES_PER_BLOCK },
-        [ten] = { TEN_AUDIO_DATA, TEN_SAMPLE_SIZE, TEN_SAMPLES_PER_BLOCK },
-        [thirteen] = { THIRTEEN_AUDIO_DATA, THIRTEEN_SAMPLE_SIZE, THIRTEEN_SAMPLES_PER_BLOCK },
-        [thirty] = { THIRTY_AUDIO_DATA, THIRTY_SAMPLE_SIZE, THIRTY_SAMPLES_PER_BLOCK },
-        [thousand] = { THOUSAND_AUDIO_DATA, THOUSAND_SAMPLE_SIZE, THOUSAND_SAMPLES_PER_BLOCK },
-        [three] = { THREE_AUDIO_DATA, THREE_SAMPLE_SIZE, THREE_SAMPLES_PER_BLOCK },
-        [twelve] = { TWELVE_AUDIO_DATA, TWELVE_SAMPLE_SIZE, TWELVE_SAMPLES_PER_BLOCK },
-        [twenty] = { TWENTY_AUDIO_DATA, TWENTY_SAMPLE_SIZE, TWENTY_SAMPLES_PER_BLOCK },
-        [two] = { TWO_AUDIO_DATA, TWO_SAMPLE_SIZE, TWO_SAMPLES_PER_BLOCK },
-        [zero] = { ZERO_AUDIO_DATA, ZERO_SAMPLE_SIZE, ZERO_SAMPLES_PER_BLOCK }
-    };
-    constexpr size_t number_samples_size = sizeof(number_samples) / sizeof(number_samples[0]);
-
-    namespace details {
-        void inline write_digits(uint32_t number) {
-            if (number >= 10) {
-                write_digits(number / 10);
-            }
-            putchar('0' + (number % 10));
-        }
-    }
-
-    /**
-     * Writes a number followed by a newline to stdout
-     * @param number The number to write
-     */
-    void write_number(uint32_t number) {
-        details::write_digits(number);
-        putchar('\n');
-    }
-
-
     // // Power monitoring
     // constexpr uint PICO_POWER_SAMPLE_COUNT = 3;
     // constexpr float VOLTAGE_CONVERSION_FACTOR = 3.0f / (1 << 12);
@@ -136,32 +43,38 @@ namespace {
     //     // Generate voltage
     //     return vsys * 3 * VOLTAGE_CONVERSION_FACTOR;
     // }
+
+    inline void silence_delay(uint32_t silence_ms) {
+        if (silence_ms) {
+            // Here we put the buck controller into PSM to reduce power consumption.
+            // gpio_put(constants::WAVESHARE_MP28164_MODE_PIN, 0);
+            absolute_time_t until = make_timeout_time_ms(silence_ms);
+            while (get_absolute_time() <= until) {
+                __wfi();
+            }
+            // gpio_put(constants::WAVESHARE_MP28164_MODE_PIN, 1);
+        }
+    }
 }
 
 int main() {
     set_sys_clock_48mhz();
-    stdio_init_all();
+    fail_init();
+    // stdio_init_all();
     // adc_init();
-
-    // Initialize and turn off the user LED on Seeed Xiao RP2350 and Waveshare RP2350 Plus
-    gpio_init(constants::USER_LED_PIN);
-    gpio_set_dir(constants::USER_LED_PIN, GPIO_OUT);
-    // For Seeed Xiao 2350, 1 = off, 0 = on
-    // For RPi Pico 2 and Waveshare RP2350 Plus, 0 = off, 1 = on
-    gpio_put(constants::USER_LED_PIN, 0);
 
     // For Waveshare RP2350 Plus, we use GPIO 23 to set fixed PWM on for MP28164.
     // This prevents PSM mode and reduces voice frequency output ripple.
-    gpio_init(constants::WAVESHARE_MP28164_MODE_PIN);
-    gpio_set_dir(constants::WAVESHARE_MP28164_MODE_PIN, GPIO_OUT);
-    gpio_put(constants::WAVESHARE_MP28164_MODE_PIN, 1);
+    // gpio_init(constants::WAVESHARE_MP28164_MODE_PIN);
+    // gpio_set_dir(constants::WAVESHARE_MP28164_MODE_PIN, GPIO_OUT);
+    // gpio_put(constants::WAVESHARE_MP28164_MODE_PIN, 0);
+    // For now, we are just going to let the pulldown do it's job
 
     audio_player player;
 
     uint32_t counter = 1234567;
     std::list<audio_player::sample_data> samples_to_play;
     while (true) {
-        write_number(counter);
         const auto tokens = number_to_speech(counter);
         counter += 1;
         if (!tokens.empty()) {
@@ -169,14 +82,15 @@ int main() {
             const auto last_token = tokens.size() - 1;
             for (size_t i = 0; i <= last_token; ++i) {
                 bool join = i != last_token && tokens[i + 1] != join_and;
-                auto sample_index = tokens[i];
-                if (sample_index >= 0 && sample_index < number_samples_size) {
-                    samples_to_play.push_back(number_samples[sample_index].join(join));
+                const auto &sample = audio::get_sample_data(tokens[i]);
+                if (sample.data) {
+                    samples_to_play.emplace_back(sample.data, sample.size, sample.samples_per_block, join);
                 }
             }
             player.play_samples(samples_to_play);
         }
-        player.play_silence(constants::SILENCE_SAMPLES);
+        // Low-power sleep for silence interval
+        silence_delay(constants::SILENCE_MS);
     }
 
     return 0;

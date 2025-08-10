@@ -7,7 +7,7 @@ from pathlib import Path
 no_silence_trim = {
     "billion.mp3" # Sounds too much like "million" if the attack is modified
 }
-raw_rate = "22050"
+raw_rate = "22058"
 
 def sox(command):
     try:
@@ -20,7 +20,7 @@ def sox(command):
 
 input_dir = Path("number_mp3_files")
 output_dir = Path("number_raw_files")
-header_dir = Path("..")
+header_dir = Path("../audio")
 os.makedirs(output_dir, exist_ok=True)
 os.makedirs(header_dir, exist_ok=True)
 
@@ -61,11 +61,11 @@ for mp3_file in mp3_files:
     sample_name = header_file.stem.upper()
     print(f"{raw_file} -> {header_file} as {sample_name}")
     with open(header_file, "w") as header:
-        header.write(f"const uint32_t {sample_name}_SAMPLE_RATE = {raw_rate};\n")
-        header.write(f"const uint32_t {sample_name}_SAMPLE_SIZE = {len(raw_data)};\n")
-        header.write(f"const uint32_t {sample_name}_SAMPLES_PER_BLOCK = {len(raw_data) // 2};\n")
+        header.write(f"constexpr uint32_t {sample_name}_SAMPLE_RATE = {raw_rate};\n")
+        header.write(f"constexpr uint32_t {sample_name}_SAMPLE_SIZE = {len(raw_data)};\n")
+        header.write(f"constexpr uint32_t {sample_name}_SAMPLES_PER_BLOCK = {len(raw_data) // 2};\n")
         header.write("\n")
-        header.write(f"const uint8_t {sample_name}_AUDIO_DATA[] = {{")
+        header.write(f"const uint8_t INFLASH {sample_name}_AUDIO_DATA[] = {{")
 
         index = 0
         while index < len(raw_data):

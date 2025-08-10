@@ -39,6 +39,8 @@ pico_sdk_init()
 # Add executable. Default name is the project name, version 0.1
 add_executable(numbers_pwm
     numbers_pwm.cpp
+    fail.cpp
+    audio.cpp
     audio_player.cpp
     adpcm_decoder.cpp
     number_to_speech.cpp
@@ -49,25 +51,28 @@ pico_set_program_version(numbers_pwm "0.1")
 
 # Modify the below lines to enable/disable output over UART/USB
 pico_enable_stdio_uart(numbers_pwm 0)
-pico_enable_stdio_usb(numbers_pwm 1)
+pico_enable_stdio_usb(numbers_pwm 0)
+
+# Copy functions to RAM for better performance and power savings
+pico_set_binary_type(numbers_pwm copy_to_ram)
 
 # Add preprocessor definitions
 target_compile_definitions(numbers_pwm PRIVATE 
     # We are hardcoding rate and format for this fixed-function program
-    AUDIO_SAMPLE_RATE=22050
+    AUDIO_SAMPLE_RATE=22058
     AUDIO_BUFFER_FORMAT=AUDIO_BUFFER_FORMAT_PCM_S16
     # This is the bottom left pin on the Seeed XIAO 2350 board
+    # Top left on the Pico 2 and Waveshare RP2350 Plus
     AUDIO_PWM_PIN=0
-    # ~23ms @ 22050Hz
-    AUDIO_BUFFER_SAMPLE_LENGTH=512
-    AUDIO_BUFFER_COUNT=5
+    # ~46ms @ 22058Hz
+    AUDIO_BUFFER_SAMPLE_LENGTH=1024
+    AUDIO_BUFFER_COUNT=3
 )
 
 # Add the standard library to the build
 target_link_libraries(numbers_pwm
     pico_audio
     pico_audio_pwm
-    hardware_adc
     hardware_gpio
     pico_stdlib
 )

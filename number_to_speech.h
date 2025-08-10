@@ -50,8 +50,8 @@ enum number_token {
 /**
  * Converts an integer to a vector of British English speech tokens.
  * 
- * @param number The integer to convert (supports 0 to 999,999,999)
- * @return A vector of string tokens representing the number in British English
+ * @param number The integer to convert (supports all unsigned 32 bit numbers)
+ * @return A vector of tokens representing the number in British English
  * 
  * Examples:
  * - 0 -> {zero}
@@ -59,7 +59,7 @@ enum number_token {
  * - 21 -> {twenty, one}
  * - 100 -> {one, hundred}
  * - 101 -> {one, hundred, join_and, one}
- * - 1234 -> {one, thousand, two", hundred, join_and, thirty, four}
+ * - 1234 -> {one, thousand, two, hundred, join_and, thirty, four}
  */
 std::vector<number_token> number_to_speech(uint32_t number);
 

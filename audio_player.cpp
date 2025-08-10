@@ -2,38 +2,25 @@
  * Copyright (c) 2025 Martin Sandiford.
  */
 
+#include "fail.h"
+#include "constants.h"
 #include "pcm_decoder.h"
 #include "audio_player.h"
 
-#include "pico/stdlib.h"
 #include "pico/audio_pwm.h"
 
-#include <cstdio>
 #include <limits>
 
 typedef audio_player::sample_data sample_data;
 typedef pcm_decoder decoder;
 
 namespace {
-    constexpr uint32_t OVERLAP_SAMPLES = 4410;
-
-    void fail(const char *message) {
-        while (true) {
-            while (!stdio_usb_connected()) {
-                sleep_ms(1000);
-            }
-            sleep_ms(5000);
-            puts(message);
-            while (stdio_usb_connected()) {
-                sleep_ms(1000);
-            }
-        }
-    }
+    constexpr size_t OVERLAP_SAMPLES = constants::OVERLAP_MS * AUDIO_SAMPLE_RATE / 1000;
 
     audio_buffer_t *safely_take_audio_buffer(audio_buffer_pool_t *producer_pool) {
         audio_buffer_t *buffer = take_audio_buffer(producer_pool, true);
         if (!buffer) {
-            fail("Failed to get free audio buffer");
+            fail(FAIL_NO_BUFFER);
         }
         return buffer;
     }
@@ -80,7 +67,7 @@ audio_player::audio_player() {
 
     producer_pool = audio_new_producer_pool(&buffer_format, AUDIO_BUFFER_COUNT, AUDIO_BUFFER_SAMPLE_LENGTH);
     if (!producer_pool) {
-        fail("Failed to create producer pool");
+        fail(FAIL_NO_PRODUCER_POOL);
     }
 
     audio_pwm_channel_config_t channel_config = default_mono_channel_config;
@@ -88,7 +75,7 @@ audio_player::audio_player() {
 
     auto output_format = audio_pwm_setup(&target_format, -1, &channel_config);
     if (!output_format) {
-        fail("Failed to setup audio PWM");
+        fail(FAIL_BAD_OUTPUT_FORMAT);
     }
 
     audio_pwm_set_correction_mode(fixed_dither);
@@ -108,10 +95,6 @@ void audio_player::play_samples(std::list<sample_data> &other_samples) {
         decoder sample(first_sample.data, first_sample.size, first_sample.block_size);
         play_samples(sample, first_sample.join_next, other_samples);
     }
-}
-
-void audio_player::play_silence(uint32_t samples) {
-    process_audio_data(producer_pool, samples, []() { return int16_t(0); });
 }
 
 template <typename Decoder>

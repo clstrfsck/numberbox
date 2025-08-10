@@ -31,7 +31,6 @@ public:
     ~audio_player();
 
     void play_samples(std::list<sample_data> &samples_to_play);
-    void play_silence(uint32_t samples);
 
 private:
     audio_buffer_pool_t *producer_pool = nullptr;
