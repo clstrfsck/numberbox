@@ -61,9 +61,8 @@ target_compile_definitions(numbers_pwm PRIVATE
     # We are hardcoding rate and format for this fixed-function program
     AUDIO_SAMPLE_RATE=22058
     AUDIO_BUFFER_FORMAT=AUDIO_BUFFER_FORMAT_PCM_S16
-    # This is the bottom left pin on the Seeed XIAO 2350 board
-    # Top left on the Pico 2 and Waveshare RP2350 Plus
-    AUDIO_PWM_PIN=0
+    # Using this pin on the Waveshare RP2350 Plus
+    AUDIO_PWM_PIN=2
     # ~46ms @ 22058Hz
     AUDIO_BUFFER_SAMPLE_LENGTH=1024
     AUDIO_BUFFER_COUNT=3
