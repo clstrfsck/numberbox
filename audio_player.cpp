@@ -42,11 +42,11 @@ namespace {
             audio_buffer_t *buffer = safely_take_audio_buffer(producer_pool);
             int16_t *samples = reinterpret_cast<int16_t *>(buffer->buffer->bytes);
             uint32_t to_add = std::min(buffer->max_sample_count, size - count);
-            
+
             for (uint32_t n = 0; n < to_add; ++n) {
                 samples[n] = source();
             }
-            
+
             buffer->sample_count = to_add;
             count += to_add;
             give_audio_buffer(producer_pool, buffer);

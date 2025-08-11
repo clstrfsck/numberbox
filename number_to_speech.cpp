@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2025 Martin Sandiford.
- * 
+ *
  * British English Number to Speech Conversion - Implementation
  */
 
@@ -33,7 +33,7 @@ namespace {
         static const std::array<number_token, 10> tens_words = {
             error, error, twenty, thirty, forty, fifty, sixty, seventy, eighty, ninety
         };
-        
+
         if (tens < tens_words.size()) {
             return tens_words[tens];
         }
@@ -44,25 +44,25 @@ namespace {
         if (number == 0) {
             return; // Return early for zero
         }
-        
+
         // Handle hundreds
         uint32_t hundreds = number / HUNDRED;
         uint32_t remainder = number % HUNDRED;
-        
+
         if (hundreds > 0) {
             tokens.push_back(ones_to_word(hundreds));
             tokens.push_back(hundred);
             add_and = true;
-        } 
+        }
         if (add_and && remainder > 0) {
             tokens.push_back(join_and);
         }
-        
+
         // Handle tens and ones
         if (remainder >= TWENTY) {
             uint32_t tens = remainder / TEN;
             uint32_t ones = remainder % TEN;
-            
+
             tokens.push_back(tens_to_word(tens));
             if (ones > 0) {
                 tokens.push_back(ones_to_word(ones));
@@ -81,7 +81,7 @@ std::vector<number_token> number_to_speech(uint32_t number) {
         tokens.push_back(zero);
         return tokens;
     }
-    
+
     // Handle billions (1,000,000,000 to 4,294,967,295)
     if (number >= BILLION) {
         uint32_t billions = number / BILLION;
@@ -89,7 +89,7 @@ std::vector<number_token> number_to_speech(uint32_t number) {
         tokens.push_back(billion);
         number %= BILLION;
     }
-    
+
     // Handle millions (1,000,000 to 999,999,999)
     if (number >= MILLION) {
         uint32_t millions = number / MILLION;
@@ -97,7 +97,7 @@ std::vector<number_token> number_to_speech(uint32_t number) {
         tokens.push_back(million);
         number %= MILLION;
     }
-    
+
     // Handle thousands (1,000 to 999,999)
     if (number >= THOUSAND) {
         uint32_t thousands = number / THOUSAND;
@@ -105,12 +105,12 @@ std::vector<number_token> number_to_speech(uint32_t number) {
         tokens.push_back(thousand);
         number %= THOUSAND;
     }
-    
+
     // Handle remaining hundreds, tens, and ones
     if (number > 0) {
         bool add_and = !tokens.empty(); // Add "and" if there are previous tokens (British style)
         hundreds_to_tokens(tokens, number, add_and);
     }
-    
+
     return tokens;
 }

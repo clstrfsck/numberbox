@@ -57,7 +57,7 @@ pico_enable_stdio_usb(numbers_pwm 0)
 pico_set_binary_type(numbers_pwm copy_to_ram)
 
 # Add preprocessor definitions
-target_compile_definitions(numbers_pwm PRIVATE 
+target_compile_definitions(numbers_pwm PRIVATE
     # We are hardcoding rate and format for this fixed-function program
     AUDIO_SAMPLE_RATE=22058
     AUDIO_BUFFER_FORMAT=AUDIO_BUFFER_FORMAT_PCM_S16

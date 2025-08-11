@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2025 Martin Sandiford.
- * 
+ *
  * British English Number to Speech Conversion
  */
 
@@ -49,10 +49,10 @@ enum number_token {
 
 /**
  * Converts an integer to a vector of British English speech tokens.
- * 
+ *
  * @param number The integer to convert (supports all unsigned 32 bit numbers)
  * @return A vector of tokens representing the number in British English
- * 
+ *
  * Examples:
  * - 0 -> {zero}
  * - 13 -> {thirteen}

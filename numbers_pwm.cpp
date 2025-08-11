@@ -20,7 +20,7 @@ namespace {
     //     // setup adc
     //     adc_gpio_init(PICO_VSYS_PIN);
     //     adc_select_input(PICO_VSYS_PIN - PICO_FIRST_ADC_PIN);
-    
+
     //     adc_fifo_setup(true, false, 0, false, false);
     //     adc_run(true);
 

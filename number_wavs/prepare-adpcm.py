@@ -26,14 +26,14 @@ def extract_data_chunk(wav_file_path):
         riff_header = f.read(12)
         if len(riff_header) != 12:
             raise ValueError("Invalid WAV file: too short")
-        
+
         chunk_id, chunk_size, format_type = struct.unpack('<4sI4s', riff_header)
-        
+
         if chunk_id != b'RIFF':
             raise ValueError(f"Not a RIFF file: {chunk_id}")
         if format_type != b'WAVE':
             raise ValueError(f"Not a WAVE file: {format_type}")
-        
+
         audio_format = None
         sample_rate = -1
         channels = 1
@@ -43,7 +43,7 @@ def extract_data_chunk(wav_file_path):
             chunk_header = f.read(8)
             if len(chunk_header) != 8:
                 raise ValueError("Unexpected end of file while reading chunk header")
-            
+
             chunk_type, chunk_data_size = struct.unpack('<4sI', chunk_header)
 
             if chunk_type == b'fmt ':
@@ -80,12 +80,12 @@ def extract_data_chunk(wav_file_path):
                     raise ValueError(f"Expected {chunk_data_size} bytes, got {len(wav_data)}")
 
                 return wav_data, samples_per_block
-            
+
             else:
                 # Skip unknown chunks
                 print(f"Skipping chunk: {chunk_type}")
                 f.read(chunk_data_size)
-                
+
                 # Ensure we're on an even byte boundary (WAV chunks must be word-aligned)
                 if chunk_data_size % 2 == 1:
                     f.read(1)

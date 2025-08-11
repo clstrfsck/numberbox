@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2025 Martin Sandiford.
- * 
+ *
  * Project Constants
  */
 

@@ -73,10 +73,10 @@ int16_t adpcm_decoder::read_header() {
         decoding_active = high_nibble = false;
         return 0;
     }
-    
+
     // Read initial predictor (16-bit little-endian)
     predictor = static_cast<int16_t>(data[0] | data[1] << 8);
-    
+
     // Read initial step index and clamp it
     step_index = clamp_(data[2], 0, 88);
     // Update step size based on step index
@@ -119,7 +119,7 @@ int16_t adpcm_decoder::decode_single_sample(uint8_t adpcm_nibble) {
     } else {
         predictor += diff;
     }
-    
+
     // Clamp to 16-bit range
     predictor = clamp_(predictor, std::numeric_limits<int16_t>::min(), std::numeric_limits<int16_t>::max());
 
@@ -149,15 +149,15 @@ int16_t adpcm_decoder::next() {
         // Process high nibble (second sample in byte)
         nibble = (partial_byte >> 4) & 0x0F;
         high_nibble = false;  // Next will be low nibble of next byte
-        
+
         // Now we've consumed the entire byte, advance to next
         data += 1;
         bytes_remaining -= 1;
     }
-    
+
     // Update decoding_active state after processing
     update_decoding_active();
-    
+
     // Decode the nibble to PCM sample
     return decode_single_sample(nibble);
 }
@@ -166,9 +166,9 @@ size_t adpcm_decoder::size() const {
     if (!decoding_active) {
         return 0;
     }
-    
+
     size_t remaining = 0;
-    
+
     if (block_size > 0) {
         // Block-based mode: samples remaining in current block
         remaining += block_remaining;
@@ -176,7 +176,7 @@ size_t adpcm_decoder::size() const {
         // Calculate bytes remaining in current block
         // block_remaining samples need (block_remaining + 1) / 2 bytes
         size_t remaining_block_bytes = (block_remaining + 1) / 2;
-        
+
         if (remaining_block_bytes < bytes_remaining) {
             // Need to calculate number of full and partial blocks in remaining data
             size_t bytes_after_current_block = bytes_remaining - remaining_block_bytes;
@@ -185,7 +185,7 @@ size_t adpcm_decoder::size() const {
             size_t bytes_per_block = 4 + block_size / 2;
             size_t complete_blocks = bytes_after_current_block / bytes_per_block;
             remaining += complete_blocks * block_size;
-            
+
             // Handle any remaining partial block
             size_t leftover_bytes = bytes_after_current_block % bytes_per_block;
             if (leftover_bytes >= 4) {
@@ -205,6 +205,6 @@ size_t adpcm_decoder::size() const {
             remaining -= 1;
         }
     }
-        
+
     return remaining;
 }

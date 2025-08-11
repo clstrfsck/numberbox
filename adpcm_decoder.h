@@ -6,7 +6,7 @@
 
 /**
  * IMA ADPCM Decoder
- * 
+ *
  * Converts IMA ADPCM compressed audio data to signed 16-bit PCM samples.
  * IMA ADPCM uses 4-bit samples with adaptive quantization.
  */
@@ -14,33 +14,33 @@ class adpcm_decoder {
 public:
     /**
      * Constructor
-     * 
+     *
      * @param adpcm_data Pointer to ADPCM data to decode
      * @param data_length Total length of data in bytes
-     * @param block_size Size of each sample block in bytes.  
+     * @param block_size Size of each sample block in bytes.
      *          Use zero for raw ADPCM data without block headers.
      */
     adpcm_decoder(const uint8_t *adpcm_data, size_t data_length, size_t block_size);
 
     /**
      * Decode and return a single sample
-     * 
+     *
      * Convenient method for sample-by-sample processing.
-     * 
+     *
      * @return Next 16-bit PCM sample, or 0 if no more data available
      */
     int16_t next();
 
     /**
      * Check if there is more data to decode
-     * 
+     *
      * @return true if more data is available, false if decoding is complete
      */
     bool empty() const { return !decoding_active; }
 
     /**
      * Get the number of samples remaining to be decoded
-     * 
+     *
      * @return Number of 16-bit PCM samples that will be produced from remaining data
      */
     size_t size() const;
