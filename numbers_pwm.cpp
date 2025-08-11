@@ -8,6 +8,7 @@
 
 #include "hardware/clocks.h"
 
+#include "pico.h"
 #include "pico/stdlib.h"
 
 namespace {
@@ -57,9 +58,27 @@ namespace {
     }
 }
 
+namespace counter {
+    constexpr uint32_t COUNTER_MAGIC_VALUE = 0xDEADBEEF;
+    uint32_t __uninitialized_ram(counter_magic);
+    uint32_t __uninitialized_ram(counter_value);
+
+    inline void counter_init() {
+        if (counter_magic != COUNTER_MAGIC_VALUE) {
+            counter_value = 1;
+            counter_magic = COUNTER_MAGIC_VALUE;
+        }
+    }
+
+    inline uint32_t get_and_increment_counter() {
+        return counter_value++;
+    }
+}
+
 int main() {
     set_sys_clock_48mhz();
     fail_init();
+    counter::counter_init();
     // stdio_init_all();
     // adc_init();
 
@@ -72,11 +91,9 @@ int main() {
 
     audio_player player;
 
-    uint32_t counter = 1234567;
     std::list<audio_player::sample_data> samples_to_play;
     while (true) {
-        const auto tokens = number_to_speech(counter);
-        counter += 1;
+        const auto tokens = number_to_speech(counter::get_and_increment_counter());
         if (!tokens.empty()) {
             samples_to_play.clear();
             const auto last_token = tokens.size() - 1;
