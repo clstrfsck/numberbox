@@ -1,0 +1,4 @@
+ruby -e "require 'time';puts File.birthtime(ARGF).strftime('%F %H:%M:%S.%L');" \
+    build/numbers_pwm.uf2
+
+# 2025-08-10 14:35:43.237
