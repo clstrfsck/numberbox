@@ -101,6 +101,26 @@ and used raw PCM data in the end.
 - ***`pcm_decoder.h`*** Header only "decoder" for PCM data.  Just reassembles 16
   bit samples directly from bytes data.
 
+#### Mixing
+
+Adjacent samples are blended / mixed at the start / end to make the number
+readout speech sound more natural.
+
+The blending mixes approximately 200ms of the end / start of adjacent samples.
+For example, the number 200 has two samples "two" and "hundred".  They are
+mixed like so:
+
+```text
+|------- two ~562ms --------|
+                  |- 200ms -|
+                  |------- hundred ~650ms -------|
+```
+
+This helps the speed sound more continuous.  The amount of overlap is
+configurable— see th enext section for `OVERLAP_MS`.
+
+#### Configuration
+
 There are some configuration options in the `CMakeLists.txt` file that can be
 tweaked.  I have not, as yet, done a great job of working out which of these
 should be in the `CMakeLists.txt` file, and which should be in `constants.h`,
@@ -134,13 +154,13 @@ will flash with a code showing the problem.  Failure codes are defined in
 `WAVESHARE_MP28164_MODE_PIN` is used to control the mode of the
 [MP28164](https://www.monolithicpower.com/en/mp28164.html) DC-DC converter on
 the Waveshare controller.  Code can use this pin to switch between PSM (lower
-power consumption, higher ripple) and PCM (higher power consumption, lower
-ripple) modes.  Initially I was configuring the controller to be in PCM mode
+power consumption, higher ripple) and PWM (higher power consumption, lower
+ripple) modes.  Initially I was configuring the controller to be in PWM mode
 during audio output, and then switch to PSM mode during the silence between
-numbers.  By reducing clock speed and audio volume and optimising the code, I
-managed to reduce the current draw to ~10ms.  This is low enough to permanently
-run the converter in PSM mode without audible ripple, so the code to manipulate
-the mode is commented out in `numbers_pwm.cpp`.
+numbers.  By reducing clock speed and audio volume and also optimising the code,
+I managed to reduce the current draw to ~10ms.  This is low enough to
+permanently run the converter in PSM mode without audible ripple, so the code to
+manipulate the mode is commented out in `numbers_pwm.cpp`.
 
 `PICO_FIRST_ADC_PIN` and `PICO_VSYS_PIN` can be used to measure the battery
 voltage.  Initially I had plans to monitor the voltage and output some audible
@@ -212,7 +232,9 @@ then use a file to finish, rather than use the file to remove significant
 material.  You can see the slot in the overview at the start of this document.
 
 The top board just has the speaker and amplifier.  The audio quality is not
-great, but good enough for counting numbers.
+great, but good enough for counting numbers.  I drilled a 3mm hole immediately
+above the speaker— this can be (just) seen in the overview picture at the
+top of this file.
 
 ## So far so good
 
