@@ -236,11 +236,41 @@ great, but good enough for counting numbers.  I drilled a 3mm hole immediately
 above the speaker— this can be (just) seen in the overview picture at the
 top of this file.
 
+### Logical Arrangement
+
+![Overview](images/Concept.png "Fritzing Breadboard")
+
+Above is a breadboard layout showing some of the details of the three-board
+layout used in the box, drawn using Fritzing and available components.
+Unfortunately not all of the components I used were easily available in
+Fritzing, so I've used some poetic licence.
+
+The Fritzing components I was unable to find were the "Waveshare RP2350 Plus"
+and any "JST-PH" and "Molex PicoBlade" connectors.  For the Waveshare unit I
+substituted a Pico 2.  For the connectors, I just used wires.
+
+Please note that unlike the drawing, each board in the enclosure is connected
+via a flylead which makes each component separable.  The controller board is
+connected to the speaker board by a 3-wire JST-PH flylead.  The wire end of the
+flylead is connected to the non-component side of the controller board, and
+the connector end plugs into a through-hole JST-PH connector mounted on the
+non-component side of the amplifier / speaker board.  Technically the 2.0mm
+JST-PH through-hole component lead spacing is too close for the 2.54mm spacing
+of the breadboard, but for a 3-pin connector it's fine.  If you really care,
+you can use JST-XH connectors which are still not quite right, but are much
+closer.
+
+The battery came with a JST-PH connector attached to a flylead.  This is
+connected to the lower board by a 2-pin JST-PH connector mounted on the battery
+side of the board.  On the other side, a Molex PicoBlade flylead then connects
+to the PicoBlade battery connector on the Waveshare controller.
+
 ## So far so good
 
 The battery is charged through the USB-C connector on the controller.  Current
 draw for the running unit is ~10mA, so I figure a fully charged 2000mAh battery
 is good for a week, maybe a bit longer.  I haven't really tested this, but
+that seems like plenty of time to survive power failures or even moving house.
 
 The unit has been running for about 20 weeks now, and has counted up to
 2,004,519.  Progress isn't linear as, for example, 1,999,999 takes quite a bit
